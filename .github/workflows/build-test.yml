@@ -15,4 +15,12 @@ jobs:
           docker run --rm vps-test bash -c 'cat /etc/os-release | head -2; which Xvnc startplasma-x11 google-chrome-stable 2>&1 | head'
       - name: Discover KDE launch bits
         run: |
-          docker run --rm vps-test bash -c 'echo "== startplasma =="; find /usr -name "startplasma*" 2>/dev/null; echo "== kwin files =="; find /usr -name "kwin*" 2>/dev/null | head -20; echo "== kwin_x11 which =="; which kwin_x11 kwin_wayland 2>&1; echo "== rpm owner startplasma =="; rpm -qf /usr/bin/startplasma 2>&1; echo "== startplasma head =="; head -40 /usr/bin/startplasma'
+          docker run --rm vps-test bash -c '
+            echo "== dnf provides kwin_x11 ==";
+            dnf provides "*kwin_x11*" -y 2>&1 | grep -vE "^$|Downloading|Metadata|Package" | head -20;
+            echo "== dnf list kwin* ==";
+            dnf list available "kwin*" 2>&1 | grep -E "^kwin|^ " | head -20;
+            echo "== startplasma/ksmserver bins ==";
+            ls -la /usr/bin/startplasma* /usr/sbin/ksmserver /usr/bin/ksmserver 2>&1;
+            echo "== kwin wayland/x11 which ==";
+            which kwin_wayland kwin_x11 2>&1'
