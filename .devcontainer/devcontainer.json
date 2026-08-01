@@ -5,9 +5,6 @@
   },
   "remoteUser": "codespace",
   "mounts": [],
-  "features": {
-    "ghcr.io/devcontainers/features/sshd:1": {}
-  },
   "forwardPorts": [6080, 5901],
   "portsAttributes": {
     "6080": { "label": "noVNC desktop", "onAutoForward": "openBrowser" },
