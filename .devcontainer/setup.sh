@@ -56,11 +56,14 @@ if [ ! -d /tmp/noVNC ]; then
   git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/noVNC
 fi
 if [ ! -x /tmp/venv/bin/websockify ]; then
-  python3 -m venv /tmp/venv
-  /tmp/venv/bin/pip install --quiet websockify
+  (python3 -m venv /tmp/venv && /tmp/venv/bin/pip install --quiet websockify) \
+    || pip install --quiet --break-system-packages websockify \
+    || sudo dnf -y install websockify \
+    || echo "websockify install failed"
 fi
 pkill -f websockify 2>/dev/null
-nohup /tmp/venv/bin/websockify --web /tmp/noVNC 6080 localhost:5901 > /tmp/novnc.log 2>&1 &
+WEBSOCKIFY="$(command -v /tmp/venv/bin/websockify || command -v websockify || echo /tmp/venv/bin/websockify)"
+nohup $WEBSOCKIFY --web /tmp/noVNC 6080 localhost:5901 > /tmp/novnc.log 2>&1 &
 
 sleep 5
 echo "=== verify ==="

@@ -2,14 +2,14 @@ FROM fedora:43
 
 RUN dnf -y install \
     sudo git curl wget tar xz unzip gzip procps-ng which ca-certificates \
-    tigervnc-server xorg-x11-utils xorg-x11-server-utils xrandr \
+    tigervnc-server xrandr \
     plasma-workspace plasma-workspace-wallpapers plasma-desktop kwin plasma-nm \
     konsole dolphin systemsettings kde-gtk-config \
     breeze-icon-theme adwaita-icon-theme fedora-logos \
     mesa-dri-drivers \
     pipewire pipewire-pulse wireplumber pipewire-alsa \
     ffmpeg ImageMagick \
-    python3 python3-pip python3-venv \
+    python3 python3-pip \
     dejavu-sans-fonts liberation-fonts \
     dbus dbus-x11 dbus-tools xterm \
     NetworkManager \
