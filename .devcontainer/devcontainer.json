@@ -5,6 +5,11 @@
   },
   "remoteUser": "codespace",
   "mounts": [],
+  "forwardPorts": [6080, 5901],
+  "portsAttributes": {
+    "6080": { "label": "noVNC desktop", "onAutoForward": "openBrowser" },
+    "5901": { "label": "VNC", "onAutoForward": "silent" }
+  },
   "onCreateCommand": "chmod +x /workspaces/github-vps/.devcontainer/setup.sh",
   "postStartCommand": "nohup /workspaces/github-vps/.devcontainer/setup.sh > /tmp/setup.log 2>&1 &"
 }

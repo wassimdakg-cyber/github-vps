@@ -83,6 +83,17 @@ xfconf-query -c xfce4-desktop -p "$B/image-show" -s true --create -t bool
 
 nohup plank > /tmp/plank.log 2>&1 &
 
+echo "=== noVNC (browser access) ==="
+if [ ! -d /tmp/noVNC ]; then
+  git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/noVNC
+fi
+if [ ! -x /tmp/venv/bin/websockify ]; then
+  python -m venv /tmp/venv
+  /tmp/venv/bin/pip install --quiet websockify
+fi
+pkill -f websockify 2>/dev/null
+nohup /tmp/venv/bin/websockify --web /tmp/noVNC 6080 localhost:5901 > /tmp/novnc.log 2>&1 &
+
 sleep 5
 echo "=== verify ==="
 ps -o pid,cmd -C Xvnc,pipewire,wireplumber,rustdesk 2>/dev/null
