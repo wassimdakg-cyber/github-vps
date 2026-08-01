@@ -27,5 +27,4 @@ RUN useradd -m -s /bin/bash codespace \
     && chmod 440 /etc/sudoers.d/codespace
 
 ENV DISPLAY=:1
-USER codespace
 WORKDIR /home/codespace
