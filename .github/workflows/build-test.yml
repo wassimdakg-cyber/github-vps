@@ -23,4 +23,4 @@ jobs:
             echo "== startplasma/ksmserver bins ==";
             ls -la /usr/bin/startplasma* /usr/sbin/ksmserver /usr/bin/ksmserver 2>&1;
             echo "== kwin wayland/x11 which ==";
-            which kwin_wayland kwin_x11 2>&1'
+            which kwin_wayland kwin_x11 2>&1 || true'

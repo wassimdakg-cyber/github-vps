@@ -3,7 +3,7 @@ FROM fedora:43
 RUN dnf -y install \
     sudo git curl wget tar xz unzip gzip procps-ng which ca-certificates \
     tigervnc-server xrandr \
-    plasma-workspace plasma-workspace-wallpapers plasma-desktop kwin plasma-nm \
+    plasma-workspace plasma-workspace-x11 plasma-workspace-wallpapers plasma-desktop kwin kwin-x11 plasma-nm \
     konsole dolphin systemsettings kde-gtk-config \
     breeze-icon-theme adwaita-icon-theme fedora-logos \
     mesa-dri-drivers \
