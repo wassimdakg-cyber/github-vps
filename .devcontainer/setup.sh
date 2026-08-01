@@ -65,6 +65,20 @@ pkill -f websockify 2>/dev/null
 WEBSOCKIFY="$(command -v /tmp/venv/bin/websockify || command -v websockify || echo /tmp/venv/bin/websockify)"
 nohup $WEBSOCKIFY --web /tmp/noVNC 6080 localhost:5901 > /tmp/novnc.log 2>&1 &
 
+echo "=== ssh server on 2222 ==="
+sudo mkdir -p /run/sshd
+sudo pkill -x sshd 2>/dev/null
+sleep 1
+sudo /usr/sbin/sshd 2>>/tmp/sshd.log || sudo bash -c 'mkdir -p /run/sshd; /usr/sbin/sshd' 2>>/tmp/sshd.log
+sudo mkdir -p /home/codespace/.ssh
+sudo tee /home/codespace/.ssh/authorized_keys > /dev/null <<'EOF'
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKDa0sIqTsn5lnJfODhG9HtFNdplDjakEsSSdcTS/bjP
+EOF
+sudo chown -R codespace:codespace /home/codespace/.ssh
+sudo chmod 700 /home/codespace/.ssh
+sudo chmod 600 /home/codespace/.ssh/authorized_keys
+ss -tlnp 2>/dev/null | grep 2222 || echo "sshd-not-listening"
+
 sleep 5
 echo "=== verify ==="
 ps -o pid,cmd -C Xvnc,pipewire,wireplumber,rustdesk 2>/dev/null
