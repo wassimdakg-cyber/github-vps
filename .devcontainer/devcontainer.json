@@ -11,5 +11,5 @@
     "5901": { "label": "VNC", "onAutoForward": "silent" }
   },
   "onCreateCommand": "chmod +x /workspaces/github-vps/.devcontainer/setup.sh",
-  "postStartCommand": "nohup /workspaces/github-vps/.devcontainer/setup.sh > /tmp/setup.log 2>&1 &"
+  "postStartCommand": "setsid nohup bash /workspaces/github-vps/.devcontainer/setup.sh > /tmp/setup.log 2>&1 &"
 }

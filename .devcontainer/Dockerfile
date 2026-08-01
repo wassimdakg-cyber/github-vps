@@ -8,7 +8,7 @@ RUN dnf -y install \
     konsole dolphin systemsettings kde-gtk-config \
     breeze-icon-theme adwaita-icon-theme fedora-logos \
     mesa-dri-drivers \
-    pipewire pipewire-pulse wireplumber pipewire-alsa \
+    pipewire pipewire-pulse wireplumber pipewire-alsa pulseaudio-utils \
     ffmpeg ImageMagick \
     python3 python3-pip \
     dejavu-sans-fonts liberation-fonts \
