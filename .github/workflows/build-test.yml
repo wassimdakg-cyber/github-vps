@@ -26,7 +26,7 @@ jobs:
             which kwin_wayland kwin_x11 2>&1 || true'
       - name: Functional sshd check
         run: |
-          docker run --rm vps-test bash -c '
+          docker run --rm vps-test sudo bash -c '
             which sshd;
             sshd -t && echo "config-ok";
             mkdir -p /run/sshd;

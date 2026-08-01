@@ -16,6 +16,10 @@ RUN dnf -y install \
     NetworkManager \
     && ssh-keygen -A \
     && mkdir -p /run/sshd \
+    && sed -i -E 's/^#?Port .*/Port 2222/' /etc/ssh/sshd_config \
+    && sed -i -E 's/^#?(PermitRootLogin).*/\1 yes/' /etc/ssh/sshd_config \
+    && sed -i -E 's/^#?(UsePAM).*/\1 yes/' /etc/ssh/sshd_config \
+    && sed -i -E 's/^#?(PasswordAuthentication).*/\1 no/' /etc/ssh/sshd_config \
     && dnf clean all
 
 RUN useradd -m -s /bin/bash codespace \
