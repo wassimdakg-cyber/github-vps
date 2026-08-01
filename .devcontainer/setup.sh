@@ -83,6 +83,27 @@ xfconf-query -c xfce4-desktop -p "$B/image-show" -s true --create -t bool
 
 nohup plank > /tmp/plank.log 2>&1 &
 
+echo "=== google chrome ==="
+if [ ! -x /opt/google/chrome/chrome ]; then
+  cd /tmp
+  curl -fL -o chrome.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+  mkdir -p /tmp/chrome_extract && cd /tmp/chrome_extract
+  ar x /tmp/chrome.deb
+  tar -xf data.tar.xz
+  sudo rm -rf /opt/google/chrome
+  sudo cp -a /tmp/chrome_extract/opt/google/chrome /opt/google/
+  sudo chmod 755 /opt/google/chrome/chrome
+  sudo chmod a+rX -R /opt/google/chrome
+  sudo ln -sf /opt/google/chrome/chrome /usr/local/bin/google-chrome
+  sudo ln -sf /opt/google/chrome/chrome /usr/local/bin/google-chrome-stable
+fi
+sudo cp /tmp/chrome_extract/usr/share/applications/google-chrome.desktop /usr/share/applications/ 2>/dev/null
+sudo sed -i 's|^Exec=.*|Exec=/usr/bin/google-chrome-stable --no-sandbox %U|' /usr/share/applications/google-chrome.desktop
+sudo mkdir -p /usr/share/icons/hicolor/128x128/apps
+sudo cp /tmp/chrome_extract/opt/google/chrome/product_logo_256.png /usr/share/icons/hicolor/128x128/apps/google-chrome.png 2>/dev/null
+mkdir -p /home/codespace/.config/plank/dock1/launchers
+printf '[PlankDockItemPreferences]\nLauncher=file:///usr/share/applications/google-chrome.desktop\n' > /home/codespace/.config/plank/dock1/launchers/chrome.dockitem
+
 echo "=== noVNC (browser access) ==="
 if [ ! -d /tmp/noVNC ]; then
   git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/noVNC
