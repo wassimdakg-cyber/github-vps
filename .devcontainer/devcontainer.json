@@ -4,10 +4,6 @@
     "dockerfile": "Dockerfile"
   },
   "remoteUser": "codespace",
-  "containerEnv": {
-    "DISPLAY": ":1",
-    "XDG_RUNTIME_DIR": "/run/user/1000"
-  },
   "mounts": [],
   "onCreateCommand": "chmod +x /workspaces/github-vps/.devcontainer/setup.sh",
   "postStartCommand": "nohup /workspaces/github-vps/.devcontainer/setup.sh > /tmp/setup.log 2>&1 &"
