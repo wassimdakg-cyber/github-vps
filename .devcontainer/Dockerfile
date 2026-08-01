@@ -1,16 +1,19 @@
-FROM archlinux:latest
+FROM fedora:43
 
-RUN pacman -Syu --noconfirm --needed base base-devel git sudo curl wget \
-    xorg-server xorg-xinit xorg-xrandr xorg-xrdb tigervnc \
-    xfce4 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin xfce4-notifyd \
-    plank papirus-icon-theme \
-    xorg-xwd xorg-xwininfo imagemagick \
-    pipewire pipewire-pulse wireplumber libpulse \
-    python python-pip xterm \
-    gtk3 gtk4 ffmpeg \
-    networkmanager \
-    dbus \
-    && rm -rf /var/cache/pacman/pkg
+RUN dnf -y install \
+    sudo git curl wget tar xz unzip gzip procps-ng which ca-certificates \
+    tigervnc-server xorg-x11-utils xorg-x11-server-utils xrandr \
+    plasma-workspace plasma-workspace-wallpapers plasma-desktop kwin plasma-nm \
+    konsole dolphin systemsettings kde-gtk-config \
+    breeze-icon-theme adwaita-icon-theme fedora-logos \
+    mesa-dri-drivers \
+    pipewire pipewire-pulse wireplumber pipewire-alsa \
+    ffmpeg ImageMagick \
+    python3 python3-pip python3-venv \
+    dejavu-sans-fonts liberation-fonts \
+    dbus dbus-x11 dbus-tools xterm \
+    NetworkManager \
+    && dnf clean all
 
 RUN useradd -m -s /bin/bash codespace \
     && echo "codespace ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/codespace \
