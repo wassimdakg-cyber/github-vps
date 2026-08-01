@@ -1,0 +1,15 @@
+name: build-test
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker build devcontainer
+        run: |
+          docker build -t vps-test -f .devcontainer/Dockerfile .
+      - name: Verify image
+        run: |
+          docker run --rm vps-test bash -c 'cat /etc/os-release | head -2; which Xvnc startplasma-x11 google-chrome-stable 2>&1 | head'
