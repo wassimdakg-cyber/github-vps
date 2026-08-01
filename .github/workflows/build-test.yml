@@ -13,3 +13,6 @@ jobs:
       - name: Verify image
         run: |
           docker run --rm vps-test bash -c 'cat /etc/os-release | head -2; which Xvnc startplasma-x11 google-chrome-stable 2>&1 | head'
+      - name: Discover KDE launch bits
+        run: |
+          docker run --rm vps-test bash -c 'echo "== startplasma =="; find /usr -name "startplasma*" 2>/dev/null; echo "== kwin/plasmashell =="; which kwin_x11 plasmashell 2>&1; echo "== plasma bins =="; ls /usr/bin | grep -iE "startplasma|kwin|plasmashell" | head'
