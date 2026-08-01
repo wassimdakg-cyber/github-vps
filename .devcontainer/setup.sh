@@ -9,6 +9,7 @@ chmod 700 $XDG_RUNTIME_DIR
 echo "=== starting dbus ==="
 eval "$(dbus-launch --sh-syntax)"
 export DBUS_SESSION_BUS_ADDRESS
+printf "DBUS_SESSION_BUS_ADDRESS='%s';\nexport DBUS_SESSION_BUS_ADDRESS;\nDBUS_SESSION_BUS_PID=%s;\n" "$DBUS_SESSION_BUS_ADDRESS" "$DBUS_SESSION_BUS_PID" > /tmp/dbus.env
 
 echo "=== audio stack ==="
 pipewire &
@@ -27,20 +28,65 @@ if ! command -v rustdesk >/dev/null; then
   sudo pacman -U --noconfirm /tmp/rustdesk.pkg.tar.zst || echo "install failed"
 fi
 
-echo "=== Xvnc :1 + gnome-shell ==="
+echo "=== Xvnc :1 ==="
 pkill -f "Xvnc :1" 2>/dev/null
 sleep 2
 Xvnc :1 -geometry 1920x1080 -depth 24 -SecurityTypes None -localhost yes -desktop arch-macos &
 sleep 3
-export XDG_CURRENT_DESKTOP=GNOME
-export XDG_SESSION_TYPE=x11
-export XDG_SESSION_DESKTOP=gnome
-export XDG_SESSION_CLASS=user
-nohup gnome-shell --display=:1 --no-wayland > /tmp/gnome.log 2>&1 &
 
-sleep 8
+echo "=== xfce desktop (macOS look) ==="
+sudo pacman -S --noconfirm --needed \
+  xfce4 \
+  xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin xfce4-notifyd \
+  plank papirus-icon-theme \
+  xorg-xwd xorg-xwininfo imagemagick git 2>&1 | tail -3
+
+mkdir -p /home/codespace/.themes /home/codespace/.icons /home/codespace/Pictures
+
+if [ ! -d /tmp/WhiteSur-gtk-theme ]; then
+  git clone --depth 1 https://github.com/vinceliuice/WhiteSur-gtk-theme.git /tmp/WhiteSur-gtk-theme
+fi
+if [ ! -d /tmp/WhiteSur-icon-theme ]; then
+  git clone --depth 1 https://github.com/vinceliuice/WhiteSur-icon-theme.git /tmp/WhiteSur-icon-theme
+fi
+if [ ! -d /tmp/WhiteSur-wallpapers ]; then
+  git clone --depth 1 https://github.com/vinceliuice/WhiteSur-wallpapers.git /tmp/WhiteSur-wallpapers
+fi
+
+cd /home/codespace/.themes
+tar -xJf /tmp/WhiteSur-gtk-theme/release/WhiteSur-Light.tar.xz
+cd /tmp/WhiteSur-icon-theme && ./install.sh -d /home/codespace/.icons 2>&1 | tail -2
+cp /tmp/WhiteSur-wallpapers/1080p/WhiteSur.jpg /home/codespace/Pictures/wallpaper.jpg
+
+export XDG_CURRENT_DESKTOP=XFCE
+export XDG_SESSION_TYPE=x11
+export XDG_SESSION_DESKTOP=xfce
+nohup xfce4-session > /tmp/xfce.log 2>&1 &
+sleep 12
+
+echo "=== theme + wallpaper + no panels ==="
+xfconf-query -c xsettings -p /Net/ThemeName -s "WhiteSur-Light"
+xfconf-query -c xsettings -p /Net/IconThemeName -s "WhiteSur-light"
+xfconf-query -c xfwm4 -p /general/theme -s "WhiteSur-Light"
+xfconf-query -c xfwm4 -p /general/button_layout -s "HMC"
+
+xfce4-panel -q 2>/dev/null
+xfconf-query -c xfce4-panel -p /panels -s "" --create -t string
+for p in $(xfconf-query -c xfce4-panel -l 2>/dev/null | grep -E "^/panels/panel"); do
+  xfconf-query -c xfce4-panel -p "$p" -r
+done
+
+B=/backdrop/screen0/monitorVNC-0/workspace0
+xfconf-query -c xfce4-desktop -p "$B/last-image" -s /home/codespace/Pictures/wallpaper.jpg --create -t string
+xfconf-query -c xfce4-desktop -p "$B/image-style" -s 5 --create -t int
+xfconf-query -c xfce4-desktop -p "$B/image-show" -s true --create -t bool
+
+nohup plank > /tmp/plank.log 2>&1 &
+
+sleep 5
 echo "=== verify ==="
-ps -o pid,cmd -C Xvnc,gnome-shell,pipewire,wireplumber,rustdesk 2>/dev/null
+ps -o pid,cmd -C Xvnc,pipewire,wireplumber,rustdesk 2>/dev/null
+ps -ef | grep -E "xfce4-session|xfwm4|xfdesktop|plank" | grep -v grep
 pactl list short sinks
 echo "=== starting rustdesk ==="
 nohup rustdesk --server > /tmp/rustdesk-server.log 2>&1 &

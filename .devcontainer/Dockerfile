@@ -2,8 +2,9 @@ FROM archlinux:latest
 
 RUN pacman -Syu --noconfirm --needed base base-devel git sudo curl wget \
     xorg-server xorg-xinit xorg-xrandr xorg-xrdb tigervnc \
-    gnome-shell gnome-session gnome-terminal gdm gnome-control-center \
-    gsettings-desktop-schemas gnome-settings-daemon \
+    xfce4 xfce4-whiskermenu-plugin xfce4-pulseaudio-plugin xfce4-clipman-plugin xfce4-notifyd \
+    plank papirus-icon-theme \
+    xorg-xwd xorg-xwininfo imagemagick \
     pipewire pipewire-pulse wireplumber libpulse \
     python python-pip xterm \
     gtk3 gtk4 ffmpeg \
