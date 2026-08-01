@@ -24,3 +24,12 @@ jobs:
             ls -la /usr/bin/startplasma* /usr/sbin/ksmserver /usr/bin/ksmserver 2>&1;
             echo "== kwin wayland/x11 which ==";
             which kwin_wayland kwin_x11 2>&1 || true'
+      - name: Functional sshd check
+        run: |
+          docker run --rm vps-test bash -c '
+            which sshd;
+            sshd -t && echo "config-ok";
+            mkdir -p /run/sshd;
+            /usr/sbin/sshd; sleep 2;
+            ps aux | grep -E "[s]shd" | head -3;
+            ss -tlnp 2>/dev/null | grep 2222 || echo "no-2222-listener"'
