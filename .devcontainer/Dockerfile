@@ -3,6 +3,7 @@ FROM fedora:43
 RUN dnf -y install \
     sudo git curl wget tar xz unzip gzip procps-ng which ca-certificates \
     tigervnc-server xrandr \
+    openssh-server \
     plasma-workspace plasma-workspace-x11 plasma-workspace-wallpapers plasma-desktop kwin kwin-x11 plasma-nm \
     konsole dolphin systemsettings kde-gtk-config \
     breeze-icon-theme adwaita-icon-theme fedora-logos \
@@ -13,6 +14,8 @@ RUN dnf -y install \
     dejavu-sans-fonts liberation-fonts \
     dbus dbus-x11 dbus-tools xterm \
     NetworkManager \
+    && ssh-keygen -A \
+    && mkdir -p /run/sshd \
     && dnf clean all
 
 RUN useradd -m -s /bin/bash codespace \
