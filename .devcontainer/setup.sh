@@ -1,5 +1,10 @@
 #!/bin/bash
 set -x
+exec 9>/tmp/setup.lock
+if ! flock -n 9; then
+  echo "another setup.sh already running, exiting"
+  exit 0
+fi
 export XDG_RUNTIME_DIR=/tmp/runtime-codespace
 export PULSE_SERVER=unix:/tmp/runtime-codespace/pulse/native
 export DISPLAY=:1

@@ -10,6 +10,8 @@
     "6080": { "label": "noVNC desktop", "onAutoForward": "openBrowser" },
     "5901": { "label": "VNC", "onAutoForward": "silent" }
   },
-  "onCreateCommand": "chmod +x /workspaces/github-vps/.devcontainer/setup.sh",
-  "postStartCommand": "setsid nohup bash /workspaces/github-vps/.devcontainer/setup.sh > /tmp/setup.log 2>&1 &"
+  "onCreateCommand": "chmod +x /workspaces/github-vps/.devcontainer/setup.sh /workspaces/github-vps/.devcontainer/ensure-vps.sh",
+  "postCreateCommand": "bash /workspaces/github-vps/.devcontainer/setup.sh",
+  "postStartCommand": "setsid nohup bash /workspaces/github-vps/.devcontainer/ensure-vps.sh > /tmp/setup.log 2>&1 &",
+  "postAttachCommand": "bash /workspaces/github-vps/.devcontainer/ensure-vps.sh"
 }
