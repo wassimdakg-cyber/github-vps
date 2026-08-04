@@ -30,9 +30,9 @@ if ! pgrep -x wireplumber >/dev/null 2>&1; then
 fi
 if [ "$started" = "1" ]; then
   sleep 4
-  pactl load-module module-null-sink sink_name=virtual_sink 2>/dev/null
-  pactl set-default-sink virtual_sink 2>/dev/null
-  pactl set-default-source virtual_sink.monitor 2>/dev/null
+  timeout 15 pactl load-module module-null-sink sink_name=virtual_sink 2>/dev/null
+  timeout 15 pactl set-default-sink virtual_sink 2>/dev/null
+  timeout 15 pactl set-default-source virtual_sink.monitor 2>/dev/null
 fi
 if ! pgrep -x rustdesk >/dev/null 2>&1; then
   setsid nohup rustdesk --server > /tmp/rustdesk-server.log 2>&1 < /dev/null &
