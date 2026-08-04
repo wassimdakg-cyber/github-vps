@@ -20,9 +20,9 @@ echo "=== audio stack ==="
 if ! command -v pactl >/dev/null 2>&1; then
   sudo dnf install -y pulseaudio-utils 2>/dev/null || echo "pulseaudio-utils install failed"
 fi
-pipewire &
-pipewire-pulse &
-wireplumber &
+setsid nohup pipewire > /tmp/pipewire.log 2>&1 < /dev/null &
+setsid nohup pipewire-pulse > /tmp/pipewire.log 2>&1 < /dev/null &
+setsid nohup wireplumber > /tmp/pipewire.log 2>&1 < /dev/null &
 sleep 4
 pactl load-module module-null-sink sink_name=virtual_sink
 pactl set-default-sink virtual_sink
@@ -38,7 +38,7 @@ fi
 echo "=== Xvnc :1 ==="
 pkill -f "Xvnc :1" 2>/dev/null
 sleep 2
-Xvnc :1 -geometry 1920x1080 -depth 24 -SecurityTypes None -localhost yes -desktop fedora-kde &
+setsid nohup Xvnc :1 -geometry 1920x1080 -depth 24 -SecurityTypes None -localhost yes -desktop fedora-kde > /tmp/xvnc.log 2>&1 < /dev/null &
 sleep 3
 
 echo "=== KDE Plasma (Fedora default look) ==="
@@ -48,7 +48,7 @@ export XDG_SESSION_DESKTOP=KDE
 export QT_X11_NO_MITSHM=1
 export LIBGL_ALWAYS_SOFTWARE=1
 export KWIN_X11_NO_SYNC=1
-nohup dbus-launch --exit-with-session startplasma-x11 > /tmp/kde.log 2>&1 &
+setsid nohup dbus-launch --exit-with-session startplasma-x11 > /tmp/kde.log 2>&1 < /dev/null &
 sleep 25
 
 echo "=== google chrome (fedora rpm) ==="
@@ -71,7 +71,7 @@ if [ ! -x /tmp/venv/bin/websockify ]; then
 fi
 pkill -f websockify 2>/dev/null
 WEBSOCKIFY="$(command -v /tmp/venv/bin/websockify || command -v websockify || echo /tmp/venv/bin/websockify)"
-nohup $WEBSOCKIFY --web /tmp/noVNC 6080 localhost:5901 > /tmp/novnc.log 2>&1 &
+setsid nohup $WEBSOCKIFY --web /tmp/noVNC 6080 localhost:5901 > /tmp/novnc.log 2>&1 < /dev/null &
 
 echo "=== ssh key (append, never clobber agent keys) ==="
 sudo mkdir -p /home/codespace/.ssh
@@ -88,6 +88,6 @@ ps -o pid,cmd -C Xvnc,pipewire,wireplumber,rustdesk 2>/dev/null
 ps -ef | grep -E "plasmashell|kwin_x11|startplasma" | grep -v grep
 pactl list short sinks
 echo "=== starting rustdesk ==="
-nohup rustdesk --server > /tmp/rustdesk-server.log 2>&1 &
-nohup rustdesk --tray > /tmp/rustdesk-tray.log 2>&1 &
+setsid nohup rustdesk --server > /tmp/rustdesk-server.log 2>&1 < /dev/null &
+setsid nohup rustdesk --tray > /tmp/rustdesk-tray.log 2>&1 < /dev/null &
 echo "SETUP_DONE"
