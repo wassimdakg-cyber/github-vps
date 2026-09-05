@@ -15,7 +15,11 @@ echo "=== dbus ==="
 eval "$(dbus-launch --sh-syntax)"
 export DBUS_SESSION_BUS_ADDRESS
 printf "DBUS_SESSION_BUS_ADDRESS='%s';\nexport DBUS_SESSION_BUS_ADDRESS;\nDBUS_SESSION_BUS_PID=%s;\n" "$DBUS_SESSION_BUS_ADDRESS" "$DBUS_SESSION_BUS_PID" > /tmp/dbus.env
-pgrep -x dbus-daemon >/dev/null || sudo dbus-daemon --system --fork 2>&1 || true
+if [ ! -S /run/dbus/system_bus_socket ]; then
+  sudo mkdir -p /run/dbus
+  sudo dbus-daemon --system --fork 2>&1 || echo "system dbus failed"
+fi
+sleep 1
 sudo mkdir -p /var/lib/flatpak/repo
 sudo ostree init --repo=/var/lib/flatpak/repo --mode=bare-user-only 2>/dev/null || echo "flatpak system repo already ok"
 
@@ -32,7 +36,10 @@ timeout 15 pactl set-default-sink virtual_sink
 timeout 15 pactl set-default-source virtual_sink.monitor
 
 echo "=== flatpak + flathub ==="
-mkdir -p /home/codespace/.local/share/flatpak/repo
+if [ ! -d /home/codespace/.local/share/flatpak/repo/objects ]; then
+  rm -rf /home/codespace/.local/share/flatpak/repo
+  ostree init --repo=/home/codespace/.local/share/flatpak/repo --mode=bare-user-only 2>&1 || true
+fi
 timeout 120 flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo 2>&1 || echo "flathub add failed (will retry)"
 
 echo "=== firefox via flatpak ==="
@@ -55,14 +62,17 @@ setsid nohup Xvnc :1 -geometry 1920x1080 -depth 24 -SecurityTypes None -localhos
 sleep 3
 
 echo "=== GNOME (X11 session) ==="
+source /tmp/dbus.env
 export XDG_CURRENT_DESKTOP=GNOME
 export XDG_SESSION_TYPE=x11
 export XDG_SESSION_DESKTOP=gnome
-export XDG_CURRENT_DESKTOP=GNOME-Classic:GNOME
 export QT_X11_NO_MITSHM=1
 export LIBGL_ALWAYS_SOFTWARE=1
 export COLORTERM=truecolor
-setsid nohup dbus-run-session -- gnome-session --session=gnome > /tmp/gnome.log 2>&1 < /dev/null &
+export GSK_RENDERER=cairo
+export GDK_BACKEND=x11
+export MESA_GL_VERSION_OVERRIDE=3.3
+setsid nohup gnome-session --session=gnome > /tmp/gnome.log 2>&1 < /dev/null &
 sleep 30
 
 echo "=== google chrome (ubuntu deb) ==="
