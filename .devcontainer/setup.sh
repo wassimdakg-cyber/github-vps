@@ -15,10 +15,13 @@ echo "=== dbus ==="
 eval "$(dbus-launch --sh-syntax)"
 export DBUS_SESSION_BUS_ADDRESS
 printf "DBUS_SESSION_BUS_ADDRESS='%s';\nexport DBUS_SESSION_BUS_ADDRESS;\nDBUS_SESSION_BUS_PID=%s;\n" "$DBUS_SESSION_BUS_ADDRESS" "$DBUS_SESSION_BUS_PID" > /tmp/dbus.env
+pgrep -x dbus-daemon >/dev/null || sudo dbus-daemon --system --fork 2>&1 || true
+sudo mkdir -p /var/lib/flatpak/repo
+sudo ostree init --repo=/var/lib/flatpak/repo --mode=bare-user-only 2>/dev/null || echo "flatpak system repo already ok"
 
 echo "=== audio stack ==="
 if ! command -v pactl >/dev/null 2>&1; then
-  timeout 90 sudo dnf install -y pulseaudio-utils 2>/dev/null || echo "pulseaudio-utils install failed"
+  timeout 90 sudo apt-get install -y pulseaudio-utils 2>/dev/null || echo "pulseaudio-utils install failed"
 fi
 setsid nohup pipewire > /tmp/pipewire.log 2>&1 < /dev/null &
 setsid nohup pipewire-pulse > /tmp/pipewire.log 2>&1 < /dev/null &
@@ -28,45 +31,57 @@ timeout 15 pactl load-module module-null-sink sink_name=virtual_sink
 timeout 15 pactl set-default-sink virtual_sink
 timeout 15 pactl set-default-source virtual_sink.monitor
 
-echo "=== rustdesk (fedora rpm) ==="
+echo "=== flatpak + flathub ==="
+mkdir -p /home/codespace/.local/share/flatpak/repo
+timeout 120 flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo 2>&1 || echo "flathub add failed (will retry)"
+
+echo "=== firefox via flatpak ==="
+if ! flatpak --user info org.mozilla.firefox >/dev/null 2>&1; then
+  timeout 300 flatpak --user install -y --noninteractive flathub org.mozilla.firefox 2>&1 | tail -3 || echo "firefox flatpak install failed"
+fi
+
+echo "=== rustdesk (ubuntu deb) ==="
 if ! command -v rustdesk >/dev/null; then
   cd /tmp
-  timeout 120 curl -fL -o rustdesk.rpm "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-0.x86_64.rpm" || echo "rustdesk download failed"
-  timeout 120 sudo dnf install -y /tmp/rustdesk.rpm || echo "rustdesk rpm failed"
+  timeout 120 curl -fL -o rustdesk.deb "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-x86_64.deb" || echo "rustdesk download failed"
+  timeout 180 sudo apt-get install -y /tmp/rustdesk.deb 2>&1 | tail -3 || \
+  (sudo dpkg -i /tmp/rustdesk.deb 2>&1 | tail -2; timeout 180 sudo apt-get -f -y install 2>&1 | tail -2) || echo "rustdesk install failed"
 fi
 
 echo "=== Xvnc :1 ==="
 pkill -f "Xvnc :1" 2>/dev/null
 sleep 2
-setsid nohup Xvnc :1 -geometry 1920x1080 -depth 24 -SecurityTypes None -localhost yes -desktop fedora-kde > /tmp/xvnc.log 2>&1 < /dev/null &
+setsid nohup Xvnc :1 -geometry 1920x1080 -depth 24 -SecurityTypes None -localhost yes -desktop ubuntu-gnome > /tmp/xvnc.log 2>&1 < /dev/null &
 sleep 3
 
-echo "=== KDE Plasma (Fedora default look) ==="
-export XDG_CURRENT_DESKTOP=KDE
+echo "=== GNOME (X11 session) ==="
+export XDG_CURRENT_DESKTOP=GNOME
 export XDG_SESSION_TYPE=x11
-export XDG_SESSION_DESKTOP=KDE
+export XDG_SESSION_DESKTOP=gnome
+export XDG_CURRENT_DESKTOP=GNOME-Classic:GNOME
 export QT_X11_NO_MITSHM=1
 export LIBGL_ALWAYS_SOFTWARE=1
-export KWIN_X11_NO_SYNC=1
-setsid nohup dbus-launch --exit-with-session startplasma-x11 > /tmp/kde.log 2>&1 < /dev/null &
-sleep 25
+export COLORTERM=truecolor
+setsid nohup dbus-run-session -- gnome-session --session=gnome > /tmp/gnome.log 2>&1 < /dev/null &
+sleep 30
 
-echo "=== google chrome (fedora rpm) ==="
+echo "=== google chrome (ubuntu deb) ==="
 if [ ! -x /usr/bin/google-chrome-stable ]; then
   cd /tmp
-  timeout 120 curl -fL -o chrome.rpm "https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm" || echo "chrome download failed"
-  timeout 120 sudo dnf install -y /tmp/chrome.rpm || echo "chrome rpm failed"
+  timeout 120 curl -fL -o chrome.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" || echo "chrome download failed"
+  timeout 180 sudo apt-get install -y /tmp/chrome.deb 2>&1 | tail -3 || \
+  (sudo dpkg -i /tmp/chrome.deb 2>&1 | tail -2; timeout 180 sudo apt-get -f -y install 2>&1 | tail -2) || echo "chrome install failed"
 fi
-sudo sed -i 's|^Exec=.*|Exec=/usr/bin/google-chrome-stable --no-sandbox %U|' /usr/share/applications/google-chrome.desktop
+sudo sed -i 's|^Exec=.*|Exec=/usr/bin/google-chrome-stable --no-sandbox %U|' /usr/share/applications/google-chrome.desktop 2>/dev/null || true
 
 echo "=== noVNC (browser access) ==="
 if [ ! -d /tmp/noVNC ]; then
-  git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/noVNC
+  git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/noVNC 2>&1 | tail -1
 fi
 if [ ! -x /tmp/venv/bin/websockify ]; then
   (python3 -m venv /tmp/venv && /tmp/venv/bin/pip install --quiet websockify) \
     || pip install --quiet --break-system-packages websockify \
-    || sudo dnf -y install websockify \
+    || sudo apt-get install -y websockify \
     || echo "websockify install failed"
 fi
 pkill -f websockify 2>/dev/null
@@ -85,7 +100,7 @@ ss -tlnp 2>/dev/null | grep 2222 || echo "sshd-not-listening"
 sleep 5
 echo "=== verify ==="
 ps -o pid,cmd -C Xvnc,pipewire,wireplumber,rustdesk 2>/dev/null
-ps -ef | grep -E "plasmashell|kwin_x11|startplasma" | grep -v grep
+ps -ef | grep -E "gnome-shell|startplasma" | grep -v grep
 pactl list short sinks
 echo "=== starting rustdesk ==="
 setsid nohup rustdesk --server > /tmp/rustdesk-server.log 2>&1 < /dev/null &

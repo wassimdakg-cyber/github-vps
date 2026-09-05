@@ -1,5 +1,5 @@
 {
-  "name": "Fedora KDE VPS",
+  "name": "Ubuntu GNOME VPS",
   "build": {
     "dockerfile": "Dockerfile"
   },
