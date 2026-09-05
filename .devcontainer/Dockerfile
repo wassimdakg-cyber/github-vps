@@ -9,7 +9,7 @@ RUN dpkg --add-architecture i386 \
     openssh-server \
     gnome-shell gnome-session gnome-terminal nautilus gedit gnome-settings-daemon \
     gnome-control-center gsettings-desktop-schemas \
-    gnome-software gnome-software-plugin-flatpak flatpak \
+    gnome-software gnome-software-plugin-flatpak flatpak at-spi2-core zstd \
     wine wine64 winbind \
     pipewire pipewire-pulse wireplumber pulseaudio-utils \
     ffmpeg imagemagick \
