@@ -11,6 +11,7 @@ RUN dpkg --add-architecture i386 \
     gnome-control-center gsettings-desktop-schemas \
     gnome-software gnome-software-plugin-flatpak flatpak at-spi2-core zstd \
     wine wine64 winbind \
+    openjdk-21-jre \
     pipewire pipewire-pulse wireplumber pulseaudio-utils \
     ffmpeg imagemagick \
     python3 python3-pip python3-venv \

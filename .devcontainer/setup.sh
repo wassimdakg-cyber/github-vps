@@ -112,6 +112,22 @@ Categories=Network;WebBrowser;
 MimeType=text/html;text/xml;application/xhtml+xml;
 EOF
 
+echo "=== TL Legacy launcher (native jar - flatpak blocked by userns ban) ==="
+if [ ! -s /home/codespace/.local/share/TLauncher/LegacyLauncher.jar ]; then
+  mkdir -p /home/codespace/.local/share/TLauncher
+  cd /home/codespace/.local/share/TLauncher
+  timeout 300 curl -fL -o LegacyLauncher.jar "https://dl.llaun.ch/legacy/bootstrap" || echo "TL download failed"
+fi
+cat > /home/codespace/.local/share/applications/tlauncher.desktop <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=TL Legacy
+Comment=Minecraft Launcher
+Exec=sh -c 'cd /home/codespace/.local/share/TLauncher && java -jar LegacyLauncher.jar'
+Terminal=false
+Categories=Game;
+EOF
+
 echo "=== noVNC (browser access) ==="
 if [ ! -d /tmp/noVNC ]; then
   git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/noVNC 2>&1 | tail -1
