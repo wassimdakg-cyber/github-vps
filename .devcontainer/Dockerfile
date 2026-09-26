@@ -10,7 +10,7 @@ RUN dpkg --add-architecture i386 \
     gnome-shell gnome-session gnome-terminal nautilus gedit gnome-settings-daemon \
     gnome-control-center gsettings-desktop-schemas \
     gnome-software gnome-software-plugin-flatpak flatpak at-spi2-core zstd \
-    wine wine64 winbind \
+    wine wine64 wine32 libwine:i386 winbind \
     openjdk-21-jre \
     pipewire pipewire-pulse wireplumber pulseaudio-utils \
     ffmpeg imagemagick \

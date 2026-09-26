@@ -15,10 +15,12 @@ echo "=== dbus ==="
 eval "$(dbus-launch --sh-syntax)"
 export DBUS_SESSION_BUS_ADDRESS
 printf "DBUS_SESSION_BUS_ADDRESS='%s';\nexport DBUS_SESSION_BUS_ADDRESS;\nDBUS_SESSION_BUS_PID=%s;\n" "$DBUS_SESSION_BUS_ADDRESS" "$DBUS_SESSION_BUS_PID" > /tmp/dbus.env
-if [ ! -S /run/dbus/system_bus_socket ]; then
+if [ ! -S /run/dbus/system_bus_socket ] || ! dbus-send --system --print-reply --dest=org.freedesktop.DBus / org.freedesktop.DBus.ListNames >/dev/null 2>&1; then
   sudo mkdir -p /run/dbus
+  sudo rm -f /run/dbus/system_bus_socket /run/dbus/pid 2>/dev/null
   sudo dbus-daemon --system --fork 2>&1 || echo "system dbus failed"
 fi
+export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 sleep 1
 
 echo "=== audio stack ==="
@@ -66,6 +68,7 @@ sudo rm -rf /run/systemd/seats 2>/dev/null || true
 echo "pruning crash-prone settings-daemon components from session"
 sudo sed -i 's|^RequiredComponents=.*|RequiredComponents=org.gnome.Shell;org.gnome.SettingsDaemon.A11ySettings;org.gnome.SettingsDaemon.Color;org.gnome.SettingsDaemon.Keyboard;org.gnome.SettingsDaemon.MediaKeys;org.gnome.SettingsDaemon.PrintNotifications;org.gnome.SettingsDaemon.Sound;org.gnome.SettingsDaemon.Wacom;|' /usr/share/gnome-session/sessions/gnome.session
 source /tmp/dbus.env
+export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
 export XDG_CURRENT_DESKTOP=GNOME
 export XDG_SESSION_TYPE=x11
 export XDG_SESSION_DESKTOP=gnome
@@ -77,8 +80,9 @@ export GDK_BACKEND=x11
 export MESA_GL_VERSION_OVERRIDE=3.3
 pkill -f "gnome-session" 2>/dev/null
 pkill -f "gnome-shell" 2>/dev/null
+pkill -f "gnome-session-failed" 2>/dev/null
 sleep 2
-setsid nohup gnome-session --session=gnome > /tmp/gnome.log 2>&1 < /dev/null &
+setsid nohup env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket gnome-session --session=gnome > /tmp/gnome.log 2>&1 < /dev/null &
 sleep 30
 
 echo "=== google chrome (ubuntu deb) ==="
@@ -128,6 +132,24 @@ Terminal=false
 Categories=Game;
 EOF
 
+echo "=== discord (native deb; flatpak blocked by bwrap) ==="
+if [ ! -d /home/codespace/.config/discord ]; then
+  curl -fL -o /tmp/discord.deb "https://discord.com/api/download?platform=linux&format=deb" 2>/dev/null
+  sudo dpkg -i /tmp/discord.deb >/tmp/discord-deb.log 2>&1 || { sudo apt-get -f install -y >/dev/null 2>&1; sudo dpkg -i /tmp/discord.deb >>/tmp/discord-deb.log 2>&1; }
+fi
+for sb in /home/codespace/.config/discord/app-*/chrome-sandbox; do
+  [ -f "$sb" ] && { sudo chown root:root "$sb"; sudo chmod 4755 "$sb"; }
+done
+sudo sed -i 's|^Exec=.*|Exec=/usr/bin/discord --no-sandbox %U|' /usr/share/applications/discord.desktop 2>/dev/null || true
+setsid nohup /usr/bin/discord --no-sandbox > /tmp/discord.log 2>&1 < /dev/null &
+
+echo "=== roblox (wine; Hyperion blocks Wine so player will not launch) ==="
+RBOX="$(dirname "$0")/install-roblox.sh"
+[ -f "$RBOX" ] || RBOX=/tmp/install-roblox.sh
+if [ ! -f /home/codespace/.wine-roblox/drive_c/users/codespace/AppData/Local/Roblox/Versions/version-*/RobloxPlayerBeta.exe ]; then
+  sudo bash "$RBOX" >/tmp/roblox-install.log 2>&1
+fi
+
 echo "=== noVNC (browser access) ==="
 if [ ! -d /tmp/noVNC ]; then
   git clone --depth 1 https://github.com/novnc/noVNC.git /tmp/noVNC 2>&1 | tail -1
@@ -157,6 +179,15 @@ sleep 1
 setsid nohup rustdesk --server > /tmp/rustdesk-server.log 2>&1 < /dev/null &
 sleep 4
 setsid nohup rustdesk --tray > /tmp/rustdesk-tray.log 2>&1 < /dev/null &
+
+echo "=== cloudflared + vps commands (link printer) ==="
+if ! command -v cloudflared >/dev/null 2>&1 && [ ! -x /tmp/cloudflared ]; then
+  cd /tmp
+  timeout 180 curl -fL -o cloudflared.deb "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb" || echo "cloudflared download failed"
+  [ -s /tmp/cloudflared.deb ] && sudo dpkg -i /tmp/cloudflared.deb 2>&1 | tail -1 || true
+fi
+bash "$(dirname "$0")/install-vps-cmds.sh" 2>/dev/null || bash /tmp/install-vps-cmds.sh 2>/dev/null || true
+vps-tunnel || true
 
 sleep 5
 echo "=== verify ==="
